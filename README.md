@@ -9,7 +9,7 @@ A expect like lua module fork from lua-gdb package.
 Please compile and install it by copy and paste:
 ```
 $gcc -Wall -shared -fPIC -I/usr/local/include/lua51 spawn.c -o spawn.so -llua-5.1 -lutil
-$cp spawn.c /usr/local/lib/lua/5.1/
+$cp spawn.so /usr/local/lib/lua/5.1/
 ```
 **NOTE: lexecpt.lua is not working fine with whis version of spawn, just see see:)**
 
