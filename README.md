@@ -15,6 +15,8 @@ $cp spawn.so /usr/local/lib/lua/5.1/
 
 ##Functions
 
+***
+
 ###*spawn.setbuffsize([buffsize])*
 Sets default buffer size of IO, always returns the default buffer size.
 
@@ -103,6 +105,7 @@ Perform follow actions:
 ###*proc:version()*
 Prints version.
 
+***
 
 ##Example
 ```lua
