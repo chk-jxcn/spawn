@@ -214,7 +214,6 @@ static int spawn_reads(lua_State* L)
 	while((tempsz = read(pp->fd, pp->buff + sz, len - sz)) >= 0) {
 		sz += tempsz;
 		if ((!isnonblock || sz == len) || (tempsz == 0 && errno != EAGAIN)) break;
-		printf("error: %s\n", strerror(errno));
 		if(us) usleep(us);
 	}
 	if (sz == 0 && (errno != 0)) {
