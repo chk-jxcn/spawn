@@ -206,7 +206,6 @@ static int spawn_reads(lua_State* L)
 	int tempsz = 0;
 	int us = pp->delay;
 	if (lua_gettop(L) >= 2) len = lua_tointeger(L, 2);
-	if (lua_gettop(L) >= 3) us = lua_tointeger(L, 3);
 	if (len > pp->buffsize || len <= 0 ) {
 		lua_pushnil(L);
 		lua_pushstring(L,"len should less than 2048");
