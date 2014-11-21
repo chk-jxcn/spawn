@@ -29,7 +29,7 @@ Sets default buffer size of IO, always returns the default buffer size.
 ###*spawn.setterm([mode])*
 Sets Term mode of process, returns current Term mode or nil if mode is invaild.
 
-mode can be alternative as below:
+Mode is alternative of below:
 * "raw"
 
        Raw INPUT/OUTPUT, this mode useful in daemon lua script.
