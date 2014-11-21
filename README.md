@@ -32,10 +32,10 @@ Sets Term mode of process, returns current Term mode or nil if mode is invaild.
 Mode is alternative of below:
 * "raw"
 
-       Raw INPUT/OUTPUT, this mode useful in daemon lua script.
+       Raw INPUT/OUTPUT, this mode useful in lua script daemon.
 * "sane"
 
-       See stty(1), may need setting windows size, **NOT TEST** in daemon lua script yet, this mode useful in fork process like bash.
+       See stty(1), may need setting windows size, **NOT TEST** in lua script daemon yet, this mode useful in fork process like bash.
 * "keep"
 
        Keep Term the same with INPUT Term, this mode make auto input and print in current window easy.
