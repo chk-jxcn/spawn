@@ -208,15 +208,16 @@ static int spawn_reads(lua_State* L)
 	if (lua_gettop(L) >= 2) len = lua_tointeger(L, 2);
 	if (len > pp->buffsize || len <= 0 ) {
 		lua_pushnil(L);
-		lua_pushftring(L,"len should less than %d", len);
+		lua_pushfstring(L,"len should less than %d", len);
 		return 2;
 	}
 	while((tempsz = read(pp->fd, pp->buff + sz, len - sz)) >= 0) {
-		if(us) usleep(us);
 		sz += tempsz;
-		if (!isnonblock || sz == len) break;
+		if ((!isnonblock || sz == len) || (tempsz == 0 && errno != EAGAIN)) break;
+		printf("error: %s\n", strerror(errno));
+		if(us) usleep(us);
 	}
-	if (sz == 0 && errno != 0) {
+	if (sz == 0 && (errno != 0)) {
 		lua_pushnil(L);
 		lua_pushstring(L,strerror(errno));
 		return 2;
