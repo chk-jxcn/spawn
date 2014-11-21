@@ -52,17 +52,17 @@ Sets nonblock mode read interval, in unit of microsecond.
 ***
 
 ###*proc:reads([size])*
-Try Reads *size* bytes from pty. If in nonblock mode, loop reads in interval of *us*. Returns string at most min(*buffsize*, *size*) length or nil if any error occurs.
+Try reads *size* bytes from pty. If in nonblock mode, loop reads in interval of *us*. Returns string of at most min(*buffsize*, *size*) length or nil if any error occurs.
 
 Return vaules:
 ```
-.-----------------------------------.
-| Condition     | Nonblock | Block  |
-|---------------|----------|--------|
-| No data ready | -        | nil    |
-| EOF           | ""       | ""     |
-| IO error      | nil      | nil    |
-`-----------------------------------'
+.----------------------------------.
+| Condition     | Block | NonBlock |
+|---------------|-------|----------|
+| No data ready | -     | nil      |
+| EOF           | ""    | ""       |
+| IO error      | nil   | nil      |
+`----------------------------------'
 ```
 
 ***
