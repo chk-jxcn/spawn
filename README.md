@@ -35,7 +35,7 @@ mode can be alternative as below:
        Raw INPUT/OUTPUT, this mode useful in daemon lua script.
 * "sane"
 
-       see stty(1), may need setting windows size, **NOT TEST** in daemon lua script yet, this mode useful in fork process like bash.
+       See stty(1), may need setting windows size, **NOT TEST** in daemon lua script yet, this mode useful in fork process like bash.
 * "keep"
 
        Keep Term the same with INPUT Term, this mode make auto input and print in current window easy.
@@ -80,7 +80,7 @@ Writes *string* to pty. Returns write syscall return value.
 ***
 
 ###*proc:kill([sig])*
-Sends a *sig* to process or sends SIGINT if *sig* is not present.
+Sends a *sig* to process or sends SIGINT if *sig* is not presented.
 
 ***
 
@@ -92,7 +92,7 @@ Waits for a process to exit, nonblock if mode is true. Returns pid or 0 if faile
 ***
 
 ###*proc:closepty()*
-Closes FD of pty, process may exits after close FD. 
+Closes FD of pty, process may exits after FD was closed. 
 
 **NOTE: You may call proc:wait to collect process exit status, but __gc can also do it.**
 
@@ -100,9 +100,9 @@ Closes FD of pty, process may exits after close FD.
 
 ###*proc:__gc()*
 Perform follow actions:
-* Sends SIGINT to process
-* Close pty
-* Wait exit status of any child process in nonblock mode, repeat 5 times.
+* Sends SIGINT to process.
+* Closes pty.
+* Waits exit status of any child process in nonblock mode, repeat 5 times.
 
 ***
 
