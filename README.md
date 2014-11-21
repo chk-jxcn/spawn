@@ -15,7 +15,7 @@ $cp spawn.so /usr/local/lib/lua/5.1/
 **NOTE:**
 
 * **lexecpt.lua is not working fine with whis version of spawn, just see see:)**
-* **This version only be tested on FreeBSD 10.0 up to now.**
+* **This version has been tested only on FreeBSD 10.0 up to now.**
 
 ##Functions
 
