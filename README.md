@@ -73,7 +73,7 @@ Writes *string* to pty. Returns write syscall return value.
 ***
 
 ###*proc:kill([sig])*
-Sends a *sig* or SIGINT if *sig* is not present to process.
+Sends a *sig* to process or sends SIGINT if *sig* is not present.
 
 ***
 
