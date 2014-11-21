@@ -208,23 +208,19 @@ static int spawn_reads(lua_State* L)
 	if (lua_gettop(L) >= 2) len = lua_tointeger(L, 2);
 	if (len > pp->buffsize || len <= 0 ) {
 		lua_pushnil(L);
-		lua_pushstring(L,"len should less than 2048");
+		lua_pushvfstring(L,"len should less than %d", len);
 		return 2;
 	}
 	while((tempsz = read(pp->fd, pp->buff + sz, len - sz)) >= 0) {
 		if(us) usleep(us);
-		//printf("tempsz: %d, error: %s\n", tempsz, strerror(errno));
-		write(pp->fd, NULL, 0);
 		sz += tempsz;
 		if (!isnonblock || sz == len) break;
 	}
-	printf("tempsz: %d, error: %s\n", tempsz, strerror(errno));
 	if (sz == 0 && errno != 0) {
 		lua_pushnil(L);
 		lua_pushstring(L,strerror(errno));
 		return 2;
 	} else {
-		//pp->buff[sz] = '\0';
 		lua_pushlstring(L,pp->buff, sz);
 		return 1;
 	}
