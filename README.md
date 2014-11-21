@@ -1,6 +1,9 @@
 #spawn
 
-A lua expect fork from lua-gdb package.
+A expect like lua module fork from lua-gdb package.
+
+*You can download original lua-gdb package here [http://mysite.mweb.co.za/residents/sdonovan/lua/lua-gdb.zip]*
+
 
 ##Build and install
 Please compile and install it by copy and paste:
@@ -10,10 +13,12 @@ $cp spawn.c /usr/local/lib/lua/5.1/
 ```
 
 ##Functions
-***
+
 ###*spawn.setbuffsize([buffsize])*
 Sets default buffer size of IO, always returns the default buffer size.
+
 ***
+
 ###*spawn.setterm([mode])*
 Sets Term mode of process, returns current Term mode or nil if mode is invaild.
 
@@ -29,16 +34,23 @@ mode can be alternative as below:
        Keep Term the same with INPUT Term, this mode make auto input and print in current window easy.
 
 ***
+
 ###*spawn.open(process)*
 This function forks a *process*. It returns a new process handle.
-Process is default opened with **block mode** and **2048** bytes of buffer.
+Process is default opened with **block mode** and **2048** of *buffersize*.
+
 ***
+
 ###*proc:setnonblock(mode)*
 Sets pty FD to nonblock if mode is true. Returns current flags or nil if failed.
+
 ***
+
 ###*proc:setdelay(us)*
 Sets nonblock mode read interval, in unit of microsecond. 
+
 ***
+
 ###*proc:reads([size])*
 Reads *size* bytes from pty. If in nonblock mode, loop reads in interval of *us*. Returns string at most *buffsize* length or nil if any error occurs.
 
@@ -52,26 +64,44 @@ Return vaules:
 | IO error      | nil      | nil    |
 `-----------------------------------'
 ```
+
 ***
+
 ###*proc:writes(string)*
 Writes *string* to pty. Returns write syscall return value.
+
 ***
+
 ###*proc:kill(sig)*
 Sends a *sig* to process.
+
 ***
+
 ###*proc:wait(mode)*
 Waits for a process to exit, nonblock if mode is true. Returns pid or 0 if failed. 
 
 **NOTE: This function also clear userdata. Marks process closed**
+
 ***
+
 ###*proc:closepty()*
 Closes FD of pty, process may exits after close FD. 
 
 **NOTE: You may call proc:wait to collect process exit status, but __gc can also do it.**
+
 ***
+
+###*proc:__gc()*
+Perform follow actions:
+* Sends SIGINT to process
+* Close pty
+* Wait exit status of any child process in nonblock mode, repeat 5 times.
+
+***
+
 ###*proc:version()*
 Prints version.
-***
+
 
 ##Example
 ```lua
