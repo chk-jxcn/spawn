@@ -145,6 +145,7 @@ static int spawn_open(lua_State* L)
 	return 0;
 }
 
+static int spawn_gc(lua_State* L);
 
 static int spawn_reads(lua_State* L)
 {
@@ -166,6 +167,7 @@ static int spawn_reads(lua_State* L)
 		if(us) usleep(us);
 	}
 	if (sz == 0 && (errno != 0)) {
+		if(errno != EAGAIN) spawn_gc(L);	
 		lua_pushnil(L);
 		lua_pushstring(L,strerror(errno));
 		return 2;
@@ -175,6 +177,15 @@ static int spawn_reads(lua_State* L)
 	}
 }
 
+static int spawn_isdead(lua_State* L)
+{
+	procdesc *pp = ((procdesc *)luaL_checkudata(L, 1, LUA_PROCHANDLE));
+	if(pp->pid == 0) 
+		lua_pushboolean(L, 1);
+	else
+		lua_pushboolean(L, 0);
+	return 1;
+}
 
 static int spawn_setnonblock(lua_State* L)
 {   
@@ -257,6 +268,7 @@ static int spawn_gc(lua_State* L)
 	if(pp->pid > 0) kill(pp->pid, 9);
 	if(pp->fd >=0 ) spawn_closepty(L);
 	for(;i<5;i++) waitpid(-1, (int *) 0, WNOHANG);
+	memset(pp, 0, sizeof(procdesc));
 	return 0;
 }
 
@@ -301,6 +313,7 @@ static const struct luaL_reg proclib[] = {
 	{"wait",spawn_wait},
 	{"reads",spawn_reads},
 	{"writes",spawn_writes},
+	{"isdead",spawn_isdead},
 	{"setnonblock",spawn_setnonblock},
 	{"__gc", spawn_gc},
 	{"__tostring", spawn_tostring},
