@@ -1,4 +1,4 @@
-// build@ gcc -Wall -shared -fPIC -I/usr/local/include/lua51 spawnx.c -o spawnx.so -llua-5.1
+// build@ gcc -Wall -shared -fPIC -I/usr/local/include/lua51 spawnx.c -o spawnx.so -llua-5.1 -lutil
 #include <sys/param.h>
 #include <sys/types.h>
 #include <stdio.h>
