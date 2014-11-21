@@ -100,7 +100,7 @@ Closes FD of pty, process may exits after FD was closed.
 
 ###*proc:__gc()*
 Perform follow actions:
-* Sends SIGINT to process.
+* Sends SIGKILL to process.
 * Closes pty.
 * Waits exit status of any child process in nonblock mode, repeat 5 times.
 
