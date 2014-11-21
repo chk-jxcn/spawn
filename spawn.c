@@ -220,6 +220,7 @@ static int spawn_closepty(lua_State* L)
 {
 	procdesc *pp = toprocp(L);
 	close(pp->fd);
+	pp->fd = -1;
 	return 0;
 }
 
