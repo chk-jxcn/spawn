@@ -98,6 +98,11 @@ Closes FD of pty, process may exits after FD was closed.
 
 ***
 
+###*proc:isdead()*
+Checks process is dead or not. Returns true if dead and vice versa.
+
+***
+
 ###*proc:__gc()*
 Perform follow actions:
 * Sends SIGKILL to process.
