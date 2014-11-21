@@ -72,8 +72,8 @@ Writes *string* to pty. Returns write syscall return value.
 
 ***
 
-###*proc:kill(sig)*
-Sends a *sig* to process.
+###*proc:kill([sig])*
+Sends a *sig* or SIGINT if *sig* is not present to process.
 
 ***
 
