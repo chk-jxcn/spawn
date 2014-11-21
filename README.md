@@ -77,7 +77,7 @@ Sends a *sig* or SIGINT if *sig* is not present to process.
 
 ***
 
-###*proc:wait(mode)*
+###*proc:wait([mode])*
 Waits for a process to exit, nonblock if mode is true. Returns pid or 0 if failed. 
 
 **NOTE: This function also clear userdata. Marks process closed**
