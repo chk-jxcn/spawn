@@ -1,4 +1,4 @@
-// build@ gcc -shared -I/lang/lua/src spawnx.c -o spawnx.dll /lang/lua/lua51.dll
+// build@ gcc -Wall -shared -fPIC -I/usr/local/include/lua51 spawnx.c -o spawnx.so -llua-5.1
 #include <sys/param.h>
 #include <sys/types.h>
 #include <stdio.h>
@@ -10,109 +10,6 @@
 #include <lauxlib.h>
 #include <lualib.h>
 
-//static char buff[2048];
-
-#define LUA_PROCHANDLE "PROCDESC*"
-#define SPAWN_VERSION "0.1"
-
-typedef struct procdesc {
-	int fd;
-	int isnonblock;
-	int delay;
-	int pid;
-	int buffsize;
-	char buff[];
-} procdesc;
-
-
-
-#ifdef WIN32
-#include <windows.h>
-static HANDLE hPipeRead,hWriteSubProcess;
-
-static int spawn_open(lua_State* L)
-{
-	const char* prog = lua_tostring(L,1);    
-	SECURITY_ATTRIBUTES sa = {sizeof(SECURITY_ATTRIBUTES), 0, 0};
-	SECURITY_DESCRIPTOR sd;
-	STARTUPINFO si = {
-		sizeof(STARTUPINFO), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-	};
-	HANDLE hRead2,hPipeWrite;
-	BOOL running;
-	PROCESS_INFORMATION pi;
-	HANDLE hProcess = GetCurrentProcess();
-	sa.bInheritHandle = TRUE;
-	sa.lpSecurityDescriptor = NULL;
-	InitializeSecurityDescriptor(&sd, SECURITY_DESCRIPTOR_REVISION);
-	SetSecurityDescriptorDacl(&sd, TRUE, NULL, FALSE);
-	sa.nLength = sizeof(SECURITY_ATTRIBUTES);
-	sa.lpSecurityDescriptor = &sd;
-
-	// Create pipe for output redirection
-	// read handle, write handle, security attributes,  number of bytes reserved for pipe - 0 default
-	CreatePipe(&hPipeRead, &hPipeWrite, &sa, 0);
-
-	// Create pipe for input redirection. In this code, you do not
-	// redirect the output of the child process, but you need a handle
-	// to set the hStdInput field in the STARTUP_INFO struct. For safety,
-	// you should not set the handles to an invalid handle.
-
-	hRead2 = NULL;
-	// read handle, write handle, security attributes,  number of bytes reserved for pipe - 0 default
-	CreatePipe(&hRead2, &hWriteSubProcess, &sa, 0);
-
-	SetHandleInformation(hPipeRead, HANDLE_FLAG_INHERIT, 0);
-	SetHandleInformation(hWriteSubProcess, HANDLE_FLAG_INHERIT, 0);
-
-	si.dwFlags = STARTF_USESHOWWINDOW | STARTF_USESTDHANDLES;
-	si.wShowWindow = SW_HIDE;
-	si.hStdInput = hRead2;
-	si.hStdOutput = hPipeWrite;
-	si.hStdError = hPipeWrite;
-
-	running = CreateProcess(
-			NULL,
-			(char*)prog,
-			NULL, NULL,
-			TRUE, CREATE_NEW_PROCESS_GROUP,
-			NULL,
-			NULL, // start directory
-			&si, &pi);
-
-	CloseHandle(pi.hThread);
-	CloseHandle(hRead2);
-	CloseHandle(hPipeWrite);
-
-	if (running) {
-		lua_pushnumber(L,(int)hPipeRead);  
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-static int spawn_reads(lua_State* L)
-{
-	DWORD bytesRead;
-	int res = ReadFile(hPipeRead,buff,sizeof(buff), &bytesRead, NULL);
-	buff[bytesRead] = '\0';
-	if (res == 0) {
-		lua_pushnil(L);
-	} else {
-		lua_pushstring(L,buff);
-	}
-	return 1;
-}
-
-static int spawn_writes(lua_State* L)
-{   
-	DWORD bytesWrote;
-	const char* s = lua_tostring(L,1);
-	WriteFile(hWriteSubProcess,s,strlen(s),&bytesWrote, NULL);
-	return 0;
-}
-#else
 #include <unistd.h>
 #include <termios.h>
 #include <unistd.h>
@@ -128,7 +25,24 @@ static int spawn_writes(lua_State* L)
 #include <pty.h>
 #endif
 
-//static int spawn_fd;
+
+#define LUA_PROCHANDLE "PROCDESC*"
+#define SPAWN_VERSION "0.1"
+
+typedef struct procdesc {
+	int fd;
+	int isnonblock;
+	int delay;
+	int pid;
+	int buffsize;
+	char buff[];
+} procdesc;
+
+static int defbuffsize = 2048;
+static struct termios tm = {0}; /* inital as raw in openlib*/
+static char termmode[10] = "raw";
+
+int isspace(int c);
 
 static char *quote_strtok(char *str, char str_delim)
 {
@@ -159,30 +73,62 @@ static procdesc *toprocp(lua_State *L) {
 	return pp;
 }
 
+static int spawn_setbuffsize(lua_State* L)
+{
+	int buffsize = defbuffsize;
+	if(lua_gettop(L) >= 1) buffsize = lua_tointeger(L, 1);
+	lua_pushinteger(L, buffsize>0? defbuffsize = buffsize: defbuffsize);
+	return 1;
+}
+
+static int spawn_setterm(lua_State* L)
+{
+	if(lua_gettop(L) == 0) {
+		lua_pushstring(L, termmode);
+		return 1;
+	}
+	strncpy(termmode, luaL_checkstring(L, 1), sizeof(termmode));
+	if(strcmp(termmode, "raw") == 0)
+		cfmakeraw(&tm);    
+	else if(strcmp(termmode, "sane") == 0)
+		cfmakesane(&tm);
+	else if(strcmp(termmode, "keep") == 0) {
+		if (tcgetattr(STDIN_FILENO, &tm) < 0)
+			cfmakeraw(&tm);    
+	}
+	else {
+		lua_pushnil(L);
+		lua_pushstring(L, "Not a vaild Term mode");
+		return 2;
+	}
+	lua_pushstring(L, termmode);
+	return 1;
+}
+
 static int spawn_open(lua_State* L)
 {
 	const char *args[30];
-	int pid, i = 0;
-	int buffsize = 2048;
-	struct termios tm;    
-	char* argline = strdup(lua_tostring(L,1));
+	int buffsize = defbuffsize;
+	char* argline = strdup(luaL_checkstring(L,1));
 	char* arg = quote_strtok(argline,'"');
+
+	/* args */	
 	if (arg == NULL) return 0;
+	int i = 0;
 	while (arg != NULL) {
 		args[i++] = arg;
 		//fprintf(stderr,"%d %s\n",i,arg);
 		arg = quote_strtok(NULL,'"');
 	}
 	args[i] = NULL;    
-	memset(&tm,0,sizeof(tm));
-	cfmakeraw(&tm);    
+
 	errno = 0;
-	if (lua_gettop(L) >= 2) buffsize = lua_tointeger(L, 2);
 	procdesc *pp = (procdesc *)lua_newuserdata(L, sizeof(procdesc) + buffsize);
 	memset(pp, 0, sizeof(procdesc));  /* file handle is currently `closed' */
 	pp->buffsize = buffsize;
 	pp->pid = forkpty(&pp->fd,NULL,&tm,NULL);
 	pp->delay = 0;
+
 	if (pp->pid == 0) { // child
 		execvp(args[0],(char * const*)args);
 		// if we get here, it's an error!
@@ -194,6 +140,9 @@ static int spawn_open(lua_State* L)
 		lua_pushstring(L,strerror(errno));
 		return 2;
 	}
+	/* should not run to here*/
+	perror("'unable to spawn process");        
+	return 0;
 }
 
 
@@ -314,9 +263,11 @@ static int spawn_gc(lua_State* L)
 static int spawn_writes(lua_State* L)
 {   
 	procdesc *pp = toprocp(L);
-	const char* s = lua_tostring(L,2);
-	write(pp->fd,s,strlen(s));
-	return 0;
+	size_t size = 0;
+	const char* s = luaL_checklstring(L, 2, &size);
+	ssize_t ret = write(pp->fd, s, size);
+	lua_pushinteger(L, ret);
+	return 1;
 }
 
 static int spawn_tostring(lua_State* L)
@@ -328,7 +279,6 @@ static int spawn_tostring(lua_State* L)
 		lua_pushfstring(L, "proc (%d)", pp->pid);
 	return 1;
 }
-#endif
 
 static int spawn_version(lua_State* L)
 {
@@ -338,8 +288,8 @@ static int spawn_version(lua_State* L)
 
 static const struct luaL_reg spawn[] = {
 	{"open",spawn_open},
-	//{"reads",spawn_reads},
-	// {"writes",spawn_writes},
+	{"setbuffsize",spawn_setbuffsize},
+	{"setterm",spawn_setterm},
 	{"version",spawn_version},
 	{NULL,NULL}
 };
@@ -366,6 +316,7 @@ static void createmeta (lua_State *L) {
 
 int luaopen_spawn(lua_State *L)
 {
+	cfmakeraw(&tm);    
 	createmeta(L);
 	lua_replace(L, LUA_ENVIRONINDEX);
 	/* open library */
