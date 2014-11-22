@@ -83,24 +83,27 @@ static int spawn_setbuffsize(lua_State* L)
 
 static int spawn_setterm(lua_State* L)
 {
+	const char *t = NULL;
 	if(lua_gettop(L) == 0) {
 		lua_pushstring(L, termmode);
 		return 1;
 	}
-	strncpy(termmode, luaL_checkstring(L, 1), sizeof(termmode));
-	if(strcmp(termmode, "raw") == 0)
+	t = luaL_checkstring(L, 1);
+	if(strcmp(t, "raw") == 0)
 		cfmakeraw(&tm);    
-	else if(strcmp(termmode, "sane") == 0)
+	else if(strcmp(t, "sane") == 0)
 		cfmakesane(&tm);
-	else if(strcmp(termmode, "keep") == 0) {
-		if (tcgetattr(STDIN_FILENO, &tm) < 0)
-			cfmakeraw(&tm);    
+	else if(strcmp(t, "keep") == 0) {
+		if (tcgetattr(STDIN_FILENO, &tm) < 0) {
+			t = termmode;
+		} 
 	}
 	else {
 		lua_pushnil(L);
-		lua_pushstring(L, "Not a vaild Term mode");
+		lua_pushfstring(L, "%s is not a vaild Term mode", t);
 		return 2;
 	}
+	strncpy(termmode, t, sizeof(termmode));
 	lua_pushstring(L, termmode);
 	return 1;
 }
