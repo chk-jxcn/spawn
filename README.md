@@ -164,7 +164,7 @@ nil "Resource temporarily unavailable"
 proc (closed)
 ```
 
-###Licence
+###License
 None
 
 ###Contact
