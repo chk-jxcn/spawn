@@ -48,6 +48,11 @@ Process is default opened with **block mode** and **2048** of *buffersize*.
 
 ***
 
+###*spawn.sleep(time)*
+Sleep, time can be 1(s) "1"(s) "1s"(s) "1ms"(ms) "1us"(us).
+
+***
+
 ###*proc:setnonblock(mode)*
 Sets pty FD to nonblock if mode is true. Returns current flags or nil if failed.
 
@@ -115,11 +120,6 @@ Perform follow actions:
 
 ###*proc:version()*
 Prints version.
-
-***
-
-###*proc:sleep(time)*
-Sleep, time can be "1"(s) "1s"(s) "1ms"(ms) "1us"(us).
 
 ***
 
