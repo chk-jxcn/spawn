@@ -309,11 +309,16 @@ static int spawn_sleep(lua_State* L)
 	const char *s = NULL;
 	if(lua_gettop(L) != 1)
 		luaL_error(L, "error: only 1 args accept");
+	if(lua_isnumber(L, 1)) {
+        	lua_Number t = lua_tonumber(L, 1);
+	        usleep((int)(t * 1000000));
+		return 0;
+	}
 	(void)luaL_checkstring(L, 1);
 	lua_getglobal(L, "string");
 	lua_getfield(L, -1, "match");
 	lua_pushvalue(L, 1);
-	/* if capture mm, um or m, rasie a error */
+	/* if capture m or u, rasie a error */
 	lua_pushstring(L, "^(%d*%.?%d*)([um]?[s]?)$"); 
 	lua_call(L, 2, 2);
 	if(lua_isnil(L, -1))
