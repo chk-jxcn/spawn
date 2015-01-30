@@ -158,25 +158,30 @@ static int spawn_reads(lua_State* L)
 	int isnonblock = pp->isnonblock;
 	int tempsz = 0;
 	int us = pp->delay;
+	int sleept = 0;
 	if (lua_gettop(L) >= 2) len = lua_tointeger(L, 2);
 	if (len > pp->buffsize || len <= 0 ) {
 		lua_pushnil(L);
-		lua_pushfstring(L,"len should less than %d", len);
+		lua_pushfstring(L, "len should less than %d", len);
 		return 2;
 	}
 	while((tempsz = read(pp->fd, pp->buff + sz, len - sz)) >= 0) {
 		sz += tempsz;
 		if ((!isnonblock || sz == len) || (tempsz == 0 && errno != EAGAIN)) break;
-		if(us) usleep(us);
+		if(us) {
+			usleep(us);
+			sleept ++;
+		}
 	}
 	if (sz == 0 && (errno != 0)) {
 		if(errno != EAGAIN) spawn_gc(L);	
 		lua_pushnil(L);
-		lua_pushstring(L,strerror(errno));
+		lua_pushstring(L, strerror(errno));
 		return 2;
 	} else {
-		lua_pushlstring(L,pp->buff, sz);
-		return 1;
+		lua_pushlstring(L, pp->buff, sz);
+		lua_pushinteger(L, sleept * us);
+		return 2;
 	}
 }
 
@@ -296,6 +301,45 @@ static int spawn_tostring(lua_State* L)
 	return 1;
 }
 
+static int spawn_sleep(lua_State* L)
+{
+	/* sleep"1s" or 1ms or 1us */
+	int scale = 1;
+	size_t size = 0;
+	const char *s = NULL;
+	if(lua_gettop(L) != 1)
+		luaL_error(L, "error: only 1 args accept");
+	(void)luaL_checkstring(L, 1);
+	lua_getglobal(L, "string");
+	lua_getfield(L, -1, "match");
+	lua_pushvalue(L, 1);
+	/* if capture mm, um or m, rasie a error */
+	lua_pushstring(L, "^(%d*%.?%d*)([um]?[s]?)$"); 
+	lua_call(L, 2, 2);
+	if(lua_isnil(L, -1))
+		luaL_error(L, "error: not a vaild arg");
+	s = luaL_checklstring(L, -1, &size);
+	if(size == 0) 
+		scale = 1000000;
+	else if(size == 1)
+		if(*s != 's')	
+			luaL_error(L, "error: not a vaild arg");
+		else
+			scale = 1000000;
+	else
+		switch (*s) {
+			case 'm':
+				scale = 1000;
+				break;
+			case 'u':
+				scale = 1;
+				break;
+		}
+	lua_Number t = lua_tonumber(L, -2);
+	usleep((int)(t * scale));
+	return 0;
+}
+
 static int spawn_version(lua_State* L)
 {
 	lua_pushstring(L, SPAWN_VERSION);
@@ -306,6 +350,7 @@ static const struct luaL_reg spawn[] = {
 	{"open",spawn_open},
 	{"setbuffsize",spawn_setbuffsize},
 	{"setterm",spawn_setterm},
+	{"sleep",spawn_sleep},
 	{"version",spawn_version},
 	{NULL,NULL}
 };
