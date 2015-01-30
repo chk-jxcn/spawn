@@ -118,6 +118,11 @@ Prints version.
 
 ***
 
+###*proc:sleep(time)*
+Sleep, time can be "1"(s) "1s"(s) "1ms"(ms) "1us"(us).
+
+***
+
 ##Example
 ```lua
 >> package.cpath="./?.so"
