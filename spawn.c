@@ -1,4 +1,4 @@
-// build@ gcc -Wall -shared -fPIC -I/usr/local/include/lua51 spawnx.c -o spawnx.so -llua-5.1 -lutil
+// build@ gcc -Wall -shared -fPIC -I/usr/local/include/lua51 spawn.c -o spawn.so -llua-5.1 -lutil
 #include <sys/param.h>
 #include <sys/types.h>
 #include <stdio.h>
@@ -44,28 +44,6 @@ static char termmode[10] = "raw";
 
 int isspace(int c);
 
-static char *quote_strtok(char *str, char str_delim)
-{
-	// a specialized version of strtok() which treats quoted strings specially 
-	// (used for handling command-line parms)
-	static char *tok;
-	if(str != NULL) tok = str;
-
-	while (*tok && isspace(*tok)) tok++;
-	if (*tok == '\0') return NULL;
-
-	if (*tok == str_delim) {       
-		tok++;            // skip "
-		str = tok;
-		while (*tok && *tok != str_delim) tok++;        
-	} else {
-		str = tok;
-		while (*tok && ! isspace(*tok)) tok++;
-	}
-	if (*tok) *tok++ = '\0';  
-	return str;
-}
-
 static procdesc *toprocp(lua_State *L) {
 	procdesc *pp = ((procdesc *)luaL_checkudata(L, 1, LUA_PROCHANDLE));
 	if (pp->pid == 0)
@@ -110,20 +88,22 @@ static int spawn_setterm(lua_State* L)
 
 static int spawn_open(lua_State* L)
 {
-	const char *args[30];
 	int buffsize = defbuffsize;
-	char* argline = strdup(luaL_checkstring(L,1));
-	char* arg = quote_strtok(argline,'"');
-
-	/* args */	
-	if (arg == NULL) return 0;
+	const char** argv = NULL;
+	int argc = 0;
 	int i = 0;
-	while (arg != NULL) {
-		args[i++] = arg;
-		//fprintf(stderr,"%d %s\n",i,arg);
-		arg = quote_strtok(NULL,'"');
+	if (!lua_istable(L, -1) || lua_objlen(L, -1) == 0)
+		luaL_error(L, "This function require a table contains arguments.");
+	argc = lua_objlen(L, -1);
+	if ((argv=malloc(sizeof(*argv) * (argc + 1))) == NULL)
+		luaL_error(L, "malloc argv fail.");
+	argv[argc] = NULL;
+	for (; i < argc; i++) {
+		lua_pushinteger(L, i+1);
+		lua_gettable(L, 1);
+		argv[i] = lua_tostring(L, -1);
+		lua_pop(L, 1);
 	}
-	args[i] = NULL;    
 
 	errno = 0;
 	procdesc *pp = (procdesc *)lua_newuserdata(L, sizeof(procdesc) + buffsize);
@@ -133,11 +113,11 @@ static int spawn_open(lua_State* L)
 	pp->delay = 0;
 
 	if (pp->pid == 0) { // child
-		execvp(args[0],(char * const*)args);
+		execvp(argv[0], argv);
 		// if we get here, it's an error!
 		perror("'unable to spawn process");        
 	} else {
-		free(argline);
+		free(argv);
 		luaL_getmetatable(L, LUA_PROCHANDLE);
 		lua_setmetatable(L, -2);
 		lua_pushstring(L,strerror(errno));
@@ -345,6 +325,13 @@ static int spawn_sleep(lua_State* L)
 	return 0;
 }
 
+static int spawn_getfd(lua_State* L)
+{
+	procdesc *pp = ((procdesc *)luaL_checkudata(L, 1, LUA_PROCHANDLE));
+	lua_pushnumber(L, (lua_Number)pp->fd);
+	return 1;
+}
+
 static int spawn_version(lua_State* L)
 {
 	lua_pushstring(L, SPAWN_VERSION);
@@ -363,6 +350,7 @@ static const struct luaL_reg spawn[] = {
 static const struct luaL_reg proclib[] = {
 	{"kill",spawn_kill},
 	{"setdelay",spawn_setdelay},
+	{"fd",spawn_getfd},
 	{"closepty",spawn_closepty},
 	{"wait",spawn_wait},
 	{"reads",spawn_reads},
