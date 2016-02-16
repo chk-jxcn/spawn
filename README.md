@@ -15,7 +15,7 @@ $cp spawn.so /usr/local/lib/lua/5.1/
 **NOTE:**
 
 * **lexecpt.lua is not working fine with whis version of spawn, just see see:)**
-* **This version has been tested only on FreeBSD 10.0 up to now.**
+* **This version has been tested only on FreeBSD 10.0 and centos 6.3 up to now.**
 
 ##Functions
 
@@ -45,6 +45,11 @@ Mode is alternative of below:
 ###*spawn.open(process)*
 This function forks a *process*. It returns a new process handle.
 Process is default opened with **block mode** and **2048** of *buffersize*.
+
+***
+
+###*spawn.sleep(time)*
+Sleep, time can be 1(s) "1"(s) "1s"(s) "1ms"(ms) "1us"(us).
 
 ***
 
@@ -115,11 +120,6 @@ Perform follow actions:
 
 ###*proc:version()*
 Prints version.
-
-***
-
-###*proc:sleep(time)*
-Sleep, time can be "1"(s) "1s"(s) "1ms"(ms) "1us"(us).
 
 ***
 
