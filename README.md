@@ -1,11 +1,11 @@
-#spawn
+# spawn
 
 A expect like lua module fork from lua-gdb package.
 
 *You can download original lua-gdb package here [http://mysite.mweb.co.za/residents/sdonovan/lua/lua-gdb.zip]*
 
 
-##Build and install
+## Build and install
 Please compile and install it by copy and paste:
 ```
 $gcc -Wall -shared -fPIC -I/usr/local/include/lua51 spawn.c -o spawn.so -llua-5.1 -lutil
@@ -17,16 +17,16 @@ $cp spawn.so /usr/local/lib/lua/5.1/
 * **lexecpt.lua is not working fine with whis version of spawn, just see see:)**
 * **This version has been tested only on FreeBSD 10.0 and centos 6.3 up to now.**
 
-##Functions
+## Functions
 
 ***
 
-###*spawn.setbuffsize([buffsize])*
+### *spawn.setbuffsize([buffsize])*
 Sets default buffer size of IO, always returns the default buffer size.
 
 ***
 
-###*spawn.setterm([mode])*
+### *spawn.setterm([mode])*
 Sets Term mode of process, returns current Term mode or nil if mode is invaild.
 
 Mode is alternative of below:
@@ -42,28 +42,28 @@ Mode is alternative of below:
 
 ***
 
-###*spawn.open(process)*
+### *spawn.open(process)*
 This function forks a *process*. It returns a new process handle.
 Process is default opened with **block mode** and **2048** of *buffersize*.
 
 ***
 
-###*spawn.sleep(time)*
+### *spawn.sleep(time)*
 Sleep, time can be 1(s) "1"(s) "1s"(s) "1ms"(ms) "1us"(us).
 
 ***
 
-###*proc:setnonblock(mode)*
+### *proc:setnonblock(mode)*
 Sets pty FD to nonblock if mode is true. Returns current flags or nil if failed.
 
 ***
 
-###*proc:setdelay(us)*
+### *proc:setdelay(us)*
 Sets nonblock mode read interval, in unit of microsecond. 
 
 ***
 
-###*proc:reads([size])*
+### *proc:reads([size])*
 Try reads *size* bytes from pty. If in nonblock mode, loop reads in interval of *us*. Returns string of at most min(*buffsize*, *size*) length or nil if any error occurs.
 
 **NOTE: If a not EAGAIN error happened, preform a __gc calling, this may only occur when pty was closed.**
@@ -81,36 +81,36 @@ Return vaules:
 
 ***
 
-###*proc:writes(string)*
+### *proc:writes(string)*
 Writes *string* to pty. Returns write syscall return value.
 
 ***
 
-###*proc:kill([sig])*
+### *proc:kill([sig])*
 Sends a *sig* to process or sends SIGINT if *sig* is not presented.
 
 ***
 
-###*proc:wait([mode])*
+### *proc:wait([mode])*
 Waits for a process to exit, nonblock if mode is true. Returns pid or 0 if failed. 
 
 **NOTE: This function also clear userdata. Marks process closed**
 
 ***
 
-###*proc:closepty()*
+### *proc:closepty()*
 Closes FD of pty, process may exits after FD was closed. 
 
 **NOTE: You may call proc:wait to collect process exit status, but __gc can also do it.**
 
 ***
 
-###*proc:isdead()*
+### *proc:isdead()*
 Checks process is dead or not. Returns true if dead and vice versa.
 
 ***
 
-###*proc:__gc()*
+### *proc:__gc()*
 Perform follow actions:
 * Sends SIGKILL to process.
 * Closes pty.
@@ -118,12 +118,12 @@ Perform follow actions:
 
 ***
 
-###*proc:version()*
+### *proc:version()*
 Prints version.
 
 ***
 
-##Example
+## Example
 ```lua
 >> package.cpath="./?.so"
 >> require"spawn"
@@ -169,8 +169,8 @@ nil "Resource temporarily unavailable"
 proc (closed)
 ```
 
-###License
+### License
 None
 
-###Contact
+### Contact
 chk.jxcn#gmail.com
